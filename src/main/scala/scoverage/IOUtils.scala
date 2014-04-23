@@ -47,7 +47,11 @@ object IOUtils {
     bos.toByteArray
   }
 
-  def deserialize(classLoader: ClassLoader, file: File): Coverage = deserialize(classLoader, new FileInputStream(file))
+  def deserialize(classLoader: ClassLoader, file: File): Coverage = try {
+    deserialize(classLoader, new FileInputStream(file))
+  } catch {
+    case ex: Exception => throw new FileDeserializeException(s"Failed to deserialize file ${file}", ex)
+  }
   def deserialize(classLoader: ClassLoader, in: InputStream): Coverage = {
     val ois = new ClassLoaderObjectInputStream(classLoader, in)
     val obj = ois.readObject
@@ -62,3 +66,5 @@ class ClassLoaderObjectInputStream(classLoader: ClassLoader, is: InputStream) ex
       case cnfe: ClassNotFoundException ⇒ super.resolveClass(objectStreamClass)
     }
 }
+
+class FileDeserializeException(msg: String, cause: Exception) extends Exception(msg, cause)
